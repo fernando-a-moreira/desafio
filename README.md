@@ -1,4 +1,4 @@
-# OLX challenge
+#challenge
 
 1) The report will have 7 items:
 
