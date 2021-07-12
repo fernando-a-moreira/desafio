@@ -1,6 +1,6 @@
 #challenge
 
-1) The report will have 7 items:
+1) The report will have 8 items:
 
     a. The total number of server requests within the log file (all internal/external ips)
     
@@ -8,9 +8,11 @@
     
     c. All the requests from external IPs (public company IPs also excluded)
     
-    e. Number of unique IPs within the external requests list
+    d. Number of unique IPs within the external requests list
     
-    f. All the accepted and rejected requests (after the above filters to be applied)
+    e. All the accepted and rejected requests (after the above filters to be applied)
+    
+    f. Unauthorized SSH accesses
     
     g. List of IPs and the number of requests made by each one
     
@@ -20,7 +22,7 @@
 
 2) What you need to execute the script:
 
-    Please make sure you have installed Python 3.6+
+    Please make sure you have installed Python 3.9.x
 
     Requirements file generated with "pip freeze > requirements.txt"
 
