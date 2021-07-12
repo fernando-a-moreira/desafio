@@ -8,7 +8,7 @@ import sys
 
 
 #Constants
-path = sys.path[0]+ '\\'
+path = sys.path[0]+ '/'
 log_file = "log.txt"
 
 #functions
