@@ -9,6 +9,7 @@ import sys
 
 #Constants
 path = sys.path[0]+ '\\'
+log_file = "log.txt"
 
 #functions
 
@@ -52,6 +53,7 @@ def remove_internal_net_and_vpn(path, file, net1, net2, vpn, public1, public2,pu
     suspicious_ips = []
     suspicious_ports = []
     suspicious_action = []
+    suspicious_ssh_accepted =[]
     f = open(path+file)
     input_dict = json.load(f)
     external_src = []
@@ -63,9 +65,13 @@ def remove_internal_net_and_vpn(path, file, net1, net2, vpn, public1, public2,pu
             suspicious_ips.append(item['srcaddr'])
             suspicious_ports.append(item['port']+ ' ' + item['action'])
             suspicious_action.append(item['action'])
+            if (item['port']=="22" and item['action']=="ACCEPT"):
+                suspicious_ssh_accepted.append(item)
+
     linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos = len(external_src)
     save_json_file(path, '3_external_src.json', external_src)
-    return linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos, suspicious_ips, suspicious_ports, suspicious_action
+    number_of_suspicious_ssh = len(suspicious_ssh_accepted)
+    return linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos, suspicious_ips, suspicious_ports, suspicious_action, number_of_suspicious_ssh
 
 
 def suspicious_ip_statistics(suspicious_ips,suspicious_ports,suspicious_action):
@@ -77,8 +83,8 @@ def suspicious_ip_statistics(suspicious_ips,suspicious_ports,suspicious_action):
     contador = json.dumps(contador, indent=0, sort_keys=True)
     contador2 = json.dumps(contador2, indent=0, sort_keys=True)
     contador3 = json.dumps(contador3, indent=0, sort_keys=True)
-    save_json_file(path, '5_stats.json', contador)
-    save_json_file(path, '5_stats2.json', contador2)
+    save_json_file(path, '5_1_stats.json', contador)
+    save_json_file(path, '5_2_stats.json', contador2)
     return unique_ips, contador, unique_ports, contador2, contador3
 
 
@@ -112,23 +118,29 @@ def main():
         os.remove("final_report.txt") #keep only latest execution
     if os.path.exists("4_final_result.txt"):
         os.remove("4_final_result.txt") #keep only latest execution
-        
-
-    linhas_arquivo_original = from_txt_to_json(path, "log50k.txt") #convert the txt log into json
-    save_stats_txt(path, 'final_report.txt',"","-------------------Server Activity Report-------------------------" + '\n\n')
-    save_stats_txt(path, 'final_report.txt',"","1)Total number of connection requests: " + str(linhas_arquivo_original) + '\n\n')
-    linhas_arquivo_sem_portas_443_80 = filter_json(path,'1_log.json') #remove all entries that have ports 80 or 443
-    save_stats_txt(path, 'final_report.txt',"","2)Server requests with ports 443 and 80 filtered out: " +  str(linhas_arquivo_sem_portas_443_80) + '\n\n')
-    linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos, suspicious_ips, suspicious_ports, suspicious_action = remove_internal_net_and_vpn(path, '2_log_filtered_without_443_and_80.json', REDE_INT1, REDE_INT2, REDE_VPN, PUBLIC_IP1, PUBLIC_IP2, PUBLIC_IP3)
-    save_stats_txt(path, 'final_report.txt',"","3)Server requests excluding internal network, VPN and public IPs: " + str(linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos) + '\n\n')
-    from_json_to_txt(path, '3_external_src.json','4_final_result.txt')
-    unique_ips, contador, unique_ports, contador2, contador3 = suspicious_ip_statistics(suspicious_ips,suspicious_ports, suspicious_action)
-    save_stats_txt(path, 'final_report.txt',"","4)Unique IPs identified: " + str(len(unique_ips)) +'\n\n')
-    save_stats_txt(path, 'final_report.txt',contador3,"5)Number_of_attemps by action: (after applying filters 2 and 3)")
-    save_stats_txt(path, 'final_report.txt',"",'\n')
-    save_stats_txt(path, 'final_report.txt',contador,"6)Source_IP Number_of_attemps:")
-    save_stats_txt(path, 'final_report.txt',"",'\n')
-    save_stats_txt(path, 'final_report.txt',contador2,"7)Port Action Number_of_requests:")
+    if os.path.exists(log_file):
+        try:
+            linhas_arquivo_original = from_txt_to_json(path, log_file) #convert the txt log into json
+            save_stats_txt(path, 'final_report.txt',"","-------------------Server Activity Report-------------------------" + '\n\n')
+            save_stats_txt(path, 'final_report.txt',"","1)Total number of connection requests: " + str(linhas_arquivo_original) + '\n\n')
+            linhas_arquivo_sem_portas_443_80 = filter_json(path,'1_log.json') #remove all entries that have ports 80 or 443
+            save_stats_txt(path, 'final_report.txt',"","2)Server requests with ports 443 and 80 filtered out: " +  str(linhas_arquivo_sem_portas_443_80) + '\n\n')
+            linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos, suspicious_ips, suspicious_ports, suspicious_action,number_of_suspicious_ssh  = remove_internal_net_and_vpn(path, '2_log_filtered_without_443_and_80.json', REDE_INT1, REDE_INT2, REDE_VPN, PUBLIC_IP1, PUBLIC_IP2, PUBLIC_IP3)
+            save_stats_txt(path, 'final_report.txt',"","3)Server requests excluding internal network, VPN and public IPs: " + str(linhas_arquivo_sem_portas_rede_int_e_vpn_e_publicos) + '\n\n')
+            from_json_to_txt(path, '3_external_src.json','4_final_result.txt')
+            unique_ips, contador, unique_ports, contador2, contador3 = suspicious_ip_statistics(suspicious_ips,suspicious_ports, suspicious_action)
+            save_stats_txt(path, 'final_report.txt',"","4)Unique IPs identified: " + str(len(unique_ips)) +'\n\n')
+            save_stats_txt(path, 'final_report.txt',contador3,"5)Number_of_attemps by action: (after applying filters 2 and 3)")
+            save_stats_txt(path, 'final_report.txt',"",'\n')
+            save_stats_txt(path, 'final_report.txt',"","6)Number of UNAUTHORIZED SSH connections: {}".format(number_of_suspicious_ssh)+'\n\n')
+            save_stats_txt(path, 'final_report.txt',contador,"7)Source_IP Number_of_attemps:")
+            save_stats_txt(path, 'final_report.txt',"",'\n')
+            save_stats_txt(path, 'final_report.txt',contador2,"8)Port Action Number_of_requests:")
+            print("Success. Please check final_report.txt...")
+        except:
+            print("Error. Please contact Fernando Moreira.")    
+    else:
+            print("Make sure that {} is in the same folder as the main.py script.".format(log_file))        
     
 if __name__ == "__main__":
     main()
