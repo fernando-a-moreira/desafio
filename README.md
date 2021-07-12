@@ -18,7 +18,7 @@
     
     h. All ports target of requests and the number of requests made over each one
     
-    
+    The final_report.txt will be generated in the same location you run the main script
 
 2) What you need to execute the script:
 
